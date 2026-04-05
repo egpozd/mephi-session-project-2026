@@ -1,0 +1,15 @@
+=== LSBLK ===
+NAME    SIZE TYPE FSTYPE MOUNTPOINT      LABEL
+zram0   1.9G disk        [SWAP]          
+vda      20G disk                        
+├─vda1    1M part                        
+└─vda2   20G part xfs    /               
+vdb      10G disk                        
+└─vdb1   10G part ext4   /data/mephi-web MEPHI_DATA
+
+=== FINDMNT ===
+TARGET          SOURCE    FSTYPE OPTIONS
+/data/mephi-web /dev/vdb1 ext4   rw,relatime,seclabel
+
+=== FSTAB ===
+UUID=ab786fee-4bff-4cf5-ab04-64f73ffa172c /data/mephi-web ext4 defaults 0 2

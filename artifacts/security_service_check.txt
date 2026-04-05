@@ -1,0 +1,14 @@
+=== NGINX ACTIVE ===
+active
+
+=== NGINX ENABLED ===
+enabled
+
+=== SELINUX MODE ===
+Enforcing
+
+=== SELINUX CONTEXT ===
+system_u:object_r:httpd_sys_content_t:s0 /data/mephi-web
+
+=== TCPDUMP CAPABILITIES ===
+/usr/sbin/tcpdump cap_net_admin,cap_net_raw=eip

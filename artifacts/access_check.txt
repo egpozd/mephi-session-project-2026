@@ -1,0 +1,10 @@
+=== MEPHI-ADMIN ===
+uid=1001(mephi-admin) gid=1003(mephi-admin) groups=1003(mephi-admin),1002(mephi-devs)
+
+=== DIRECTORY PERMS ===
+drwxrwsr-x. 3 root mephi-devs 4096 Apr  5 16:00 /data/mephi-web
+
+=== ROOT PASSWORD STATUS ===
+
+=== SSH ROOT LOGIN ===
+permitrootlogin no
