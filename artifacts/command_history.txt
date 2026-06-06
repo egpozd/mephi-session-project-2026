@@ -1,0 +1,275 @@
+    1  cat /etc/fedora-release
+    2  nmcli connection show --active
+    3  nmcli -f ipv4.method,ipv4.addresses,ipv4.gateway,ipv4.dns connection show "cloud-init eth0"
+    4  nmcli -f IP4.ADDRESS,IP4.GATEWAY,IP4.DNS device show eth0
+    5  hostnamectl
+    6  sudo hostnamectl set-hostname mephi-2026.domain.local && hostnamectl --static
+    7  sudo nmcli connection modify "cloud-init eth0" ipv4.method manual ipv4.addresses "192.168.1.100/24" ipv4.gateway "192.168.1.1" ipv4.dns "8.8.8.8"
+    8  nmcli -f ipv4.method,ipv4.addresses,ipv4.gateway,ipv4.dns connection show "cloud-init eth0"
+    9  sudo nmcli connection up "cloud-init eth0"
+   10  nmcli -f GENERAL.CONNECTION,IP4.ADDRESS,IP4.GATEWAY,IP4.DNS device show eth0
+   11  hostnamectl --static
+   12  { echo "=== HOSTNAME ==="; hostnamectl --static; echo; echo "=== IP ==="; ip -4 addr show dev eth0; echo; echo "=== ROUTE ==="; ip route; echo; echo "=== DNS ==="; cat /etc/resolv.conf; } | tee ~/network_check.txt
+   13  resolvectl dns eth0
+   14  echo -e "\n=== RESOLVED DNS ===" >> ~/network_check.txt && resolvectl dns eth0 | tee -a ~/network_check.txt
+   15  sudo dnf install -y nginx libcap-ng-utils
+   16  dnf download --help >/dev/null && echo OK || echo MISSING
+   17  mkdir -p ~/rpms && cd ~/rpms && dnf download tcpdump
+   18  dnf download --disablerepo=updates tcpdump
+   19  sudo rpm -ivh ~/rpms/tcpdump-*.rpm
+   20  sudo dnf install -y libpcap
+   21  sudo rpm -ivh ~/rpms/tcpdump-*.rpm
+   22  lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,LABEL
+   23  echo ',,L' | sudo sfdisk /dev/vdb
+   24  sudo mkfs.ext4 -L MEPHI_DATA /dev/vdb1
+   25  sudo mkdir -p /data/mephi-web
+   26  sudo mount /dev/vdb1 /data/mephi-web
+   27  findmnt /data/mephi-web
+   28  blkid /dev/vdb1
+   29  sudo blkid /dev/vdb1
+   30  sudo cp /etc/fstab /etc/fstab.bak
+   31  echo 'UUID=ab786fee-4bff-4cf5-ab04-64f73ffa172c /data/mephi-web ext4 defaults 0 2' | sudo tee -a /etc/fstab
+   32  grep '/data/mephi-web' /etc/fstab
+   33  sudo mount -a
+   34  sudo systemctl start nginx
+   35  systemctl is-active nginx
+   36  sudo systemctl enable nginx
+   37  sudo journalctl -u nginx --since "5 minutes ago" > ~/nginx_journal_last5min.txt
+   38  ls -l ~/nginx_journal_last5min.txt
+   39  sudo groupadd mephi-devs
+   40  sudo useradd -m -G mephi-devs mephi-admin
+   41  echo 'mephi-admin:P@ssw0rd2026' | sudo chpasswd
+   42  id mephi-admin
+   43  sudo chgrp mephi-devs /data/mephi-web
+   44  sudo chmod 2775 /data/mephi-web
+   45  ls -ld /data/mephi-web
+   46  getenforce
+   47  ls -Zd /data/mephi-web
+   48  which semanage
+   49  sudo dnf install -y policycoreutils-python-utils
+   50  sudo semanage fcontext -a -t httpd_sys_content_t '/data/mephi-web(/.*)?'
+   51  sudo restorecon -Rv /data/mephi-web
+   52  ls -Zd /data/mephi-web
+   53  echo 'Hello from Student: М2551072' | sudo tee /data/mephi-web/index.html
+   54  grep -R '^[[:space:]]*root[[:space:]]' /etc/nginx
+   55  sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak
+   56  sudo sed -i 's#root         /usr/share/nginx/html;#root         /data/mephi-web;#' /etc/nginx/nginx.conf
+   57  grep -n 'root' /etc/nginx/nginx.conf
+   58  sudo nginx -t
+   59  sudo systemctl reload nginx
+   60  curl -s http://127.0.0.1/
+   61  which tcpdump
+   62  getcap /usr/sbin/tcpdump
+   63  sudo setcap cap_net_raw,cap_net_admin=eip /usr/sbin/tcpdump
+   64  getcap /usr/sbin/tcpdump
+   65  grep -R '^[[:space:]]*PermitRootLogin' /etc/ssh/sshd_config /etc/ssh/sshd_config.d 2>/dev/null
+   66  echo 'PermitRootLogin no' | sudo tee /etc/ssh/sshd_config.d/99-disable-root.conf
+   67  sudo sshd -T | grep permitrootlogin
+   68  sudo passwd -S root
+   69  sudo systemctl reload sshd
+   70  mkdir -p ~/mephi-artifacts
+   71  cp ~/network_check.txt ~/nginx_journal_last5min.txt ~/mephi-artifacts/
+   72  ls -l ~/mephi-artifacts
+   73  { echo "=== LSBLK ==="; lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,LABEL; echo; echo "=== FINDMNT ==="; findmnt /data/mephi-web; echo; echo "=== FSTAB ==="; grep '/data/mephi-web' /etc/fstab; } > ~/mephi-artifacts/storage_check.txt
+   74  ls -l ~/mephi-artifacts/storage_check.txt
+   75  { echo "=== NGINX ACTIVE ==="; systemctl is-active nginx; echo; echo "=== NGINX ENABLED ==="; systemctl is-enabled nginx; echo; echo "=== SELINUX MODE ==="; getenforce; echo; echo "=== SELINUX CONTEXT ==="; ls -Zd /data/mephi-web; echo; echo "=== TCPDUMP CAPABILITIES ==="; getcap /usr/sbin/tcpdump; } > ~/mephi-artifacts/security_service_check.txt
+   76  ls -l ~/mephi-artifacts/security_service_check.txt
+   77  { echo "=== MEPHI-ADMIN ==="; id mephi-admin; echo; echo "=== DIRECTORY PERMS ==="; ls -ld /data/mephi-web; echo; echo "=== ROOT PASSWORD STATUS ==="; sudo passwd -S root; echo; echo "=== SSH ROOT LOGIN ==="; sudo sshd -T | grep permitrootlogin; } > ~/mephi-artifacts/access_check.txt
+   78  ls -l ~/mephi-artifacts/access_check.txt
+   79  git --version
+   80  sudo dnf install -y git
+   81  git --version
+   82  git --version > ~/mephi-artifacts/git_check.txt
+   83  mkdir -p ~/mephi-session-project-2026
+   84  cd ~/mephi-session-project-2026 && git init
+   85  git branch -m main
+   86  git config --get user.name && git config --get user.email
+   87  git remote add origin https://github.com/egpozd/mephi-session-project-2026.git
+   88  git config user.email "g17or@yandex.ru"
+   89  git config user.name "egpozd"
+   90  git config --get user.name && git config --get user.email
+   91  mkdir -p artifacts
+   92  cp ~/mephi-artifacts/* artifacts/
+   93  ls -l artifacts
+   94  cat > README.md <<'EOF'
+   95  # mephi-session-project-2026
+   96  Учебный репозиторий по заданию Linux.
+   97  ## Содержимое
+   98  - `artifacts/network_check.txt` — проверка сети и hostname
+   99  - `artifacts/nginx_journal_last5min.txt` — журнал nginx за последние 5 минут
+  100  - `artifacts/storage_check.txt` — проверка диска, файловой системы и fstab
+  101  - `artifacts/security_service_check.txt` — проверка nginx, SELinux и capabilities
+  102  - `artifacts/access_check.txt` — проверка пользователя, прав и ограничений root
+  103  - `artifacts/git_check.txt` — версия git
+  104  ## Страница nginx
+  105  Hello from Student: М2551072
+  106  EOF
+  107  head -n 5 README.md
+  108  [yc-user@fedora37-mephi mephi-session-project-2026]$ head -n 5 README.md
+  109  # mephi-session-project-2026
+  110  Учебный репозиторий по заданию Linux.
+  111  git add .
+  112  git status --short
+  113  git commit -m "Initial Linux assignment artifacts"
+  114  git push -u origin main
+  115  rpm -q nginx tcpdump libcap-ng-utils > artifacts/package_check.txt
+  116  cat artifacts/package_check.txt
+  117  [yc-user@fedora37-mephi mephi-session-project-2026]$ cat artifacts/package_check.txt
+  118  nginx-1.24.0-1.fc37.x86_64
+  119  tcpdump-4.99.1-7.fc37.x86_64
+  120  git add artifacts/package_check.txt
+  121  git commit -m "Add installed package verification"
+  122  git push
+  123  [yc-user@fedora37-mephi mephi-session-project-2026]$ git push
+  124  Username for 'https://github.com': egpozd
+  125  Password for 'https://egpozd@github.com':
+  126  Enumerating objects: 6, done.
+  127  Counting objects: 100% (6/6), done.
+  128  Delta compression using up to 2 threads
+  129  Compressing objects: 100% (4/4), done.
+  130  Writing objects: 100% (4/4), 437 bytes | 437.00 KiB/s, done.
+  131  Total 4 (delta 1), reused 0 (delta 0), pack-reused 0
+  132  remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+  133  To https://github.com/egpozd/mephi-session-project-2026.git
+  134  git status --short
+  135  curl -s http://127.0.0.1/ > artifacts/web_page_check.txt
+  136  cat artifacts/web_page_check.txt
+  137  git add artifacts/web_page_check.txt
+  138  git commit -m "Add web page verification"
+  139  git push
+  140  [yc-user@fedora37-mephi mephi-session-project-2026]$ git push
+  141  Username for 'https://github.com': egpozd
+  142  Password for 'https://egpozd@github.com':
+  143  Enumerating objects: 6, done.
+  144  Counting objects: 100% (6/6), done.
+  145  Delta compression using up to 2 threads
+  146  Compressing objects: 100% (3/3), done.
+  147  Writing objects: 100% (4/4), 399 bytes | 399.00 KiB/s, done.
+  148  Total 4 (delta 1), reused 0 (delta 0), pack-reused 0
+  149  remote: Resolving deltas: 100% (1/1), completed with 1 local object.
+  150  To https://github.com/egpozd/mephi-session-project-2026.git
+  151  git status --short
+  152  echo 'https://github.com/egpozd/mephi-session-project-2026' > REPOSITORY_URL.txt
+  153  git add REPOSITORY_URL.txt
+  154  git commit -m "Add repository URL" && git push && git status --short
+  155  \cd ~/mephi-session-project-2026 && cat > README.md <<'EOF'
+  156  # mephi-session-project-2026
+  157  ## Общая информация
+  158  Данный репозиторий содержит результаты выполнения учебного задания по Linux.
+  159  ## Важная преамбула
+  160  Задание выполнялось на технически слабом ноутбуке, поэтому в качестве рабочей среды была использована облачная виртуальная машина в Yandex Cloud.
+  161  Изначально по условиям задания предполагалось использование Fedora 43. Однако в доступной облачной среде практическое выполнение на Fedora 43 через custom image сопровождалось инфраструктурными проблемами, не относящимися к сути самого задания (в частности, вопросы инициализации cloud-init, metadata и SSH-доступа). По этой причине для завершения практической части был использован стабильный и работоспособный публичный образ Fedora 37.
+  162  При этом все ключевые команды, настройки и административные действия, предусмотренные заданием, были выполнены в полном объеме: настройка сети, установка пакетов, работа с дисками и файловой системой, настройка nginx, SELinux, пользователей, прав доступа, capabilities, ограничений root-доступа, а также подготовка подтверждающих артефактов и публикация результатов в публичном GitHub-репозитории.
+  163  Таким образом, несмотря на отличие версии ОС от первоначально заявленной в формулировке задания, содержательная и практическая часть работы выполнена корректно.
+  164  ## Использованная среда
+  165  - Облачная платформа: Yandex Cloud
+  166  - Виртуальная машина: `fedora37-mephi`
+  167  - ОС: Fedora 37
+  168  - Пользователь для работы: `yc-user`
+  169  ## Выполненные пункты задания
+  170  ### 1. Базовая система
+  171  - Развернута headless/minimal-среда Fedora на облачной VM.
+  172  ### 2. Настройка сети
+  173  Настроены параметры сети:
+  174  - IPv4 address: `192.168.1.100/24`
+  175  - Gateway: `192.168.1.1`
+  176  - DNS: `8.8.8.8`
+  177  - Hostname: `mephi-2026.domain.local`
+  178  Результаты проверки сети сохранены в файл:
+  179  - `artifacts/network_check.txt`
+  180  ### 3. Установка пакетов
+  181  Установлены требуемые пакеты:
+  182  - `nginx`
+  183  - `tcpdump`
+  184  - `libcap-ng-utils`
+  185  Подтверждение установки пакетов:
+  186  - `artifacts/package_check.txt`
+  187  ### 4. Установка tcpdump через RPM
+  188  Пакет `tcpdump` был отдельно скачан через `dnf download`, после чего установлен через `rpm`, как требовалось по заданию.
+  189  ### 5. Подготовка второго диска
+  190  Для дополнительного диска был выполнен полный цикл настройки:
+  191  - создан раздел на весь диск;
+  192  - создана файловая система `ext4`;
+  193  - задан label: `MEPHI_DATA`;
+  194  - настроено постоянное монтирование через `/etc/fstab`.
+  195  Точка монтирования:
+  196  - `/data/mephi-web`
+  197  Подтверждение:
+  198  - `artifacts/storage_check.txt`
+  199  ### 6. Настройка nginx
+  200  Выполнено:
+  201  - запуск сервиса `nginx`;
+  202  - включение автозапуска;
+  203  - настройка размещения веб-страницы;
+  204  - проверка локальной выдачи страницы.
+  205  Текст страницы:
+  206  - `Hello from Student: М2551072`
+  207  Подтверждения:
+  208  - `artifacts/nginx_journal_last5min.txt`
+  209  - `artifacts/web_page_check.txt`
+  210  - `artifacts/security_service_check.txt`
+  211  ### 7. Пользователи и группы
+  212  Созданы:
+  213  - пользователь `mephi-admin`
+  214  - группа `mephi-devs`
+  215  Для каталога `/data/mephi-web` настроены:
+  216  - групповая принадлежность;
+  217  - права `2775`.
+  218  Подтверждение:
+  219  - `artifacts/access_check.txt`
+  220  ### 8. SELinux
+  221  SELinux работает в режиме:
+  222  - `Enforcing`
+  223  Для каталога `/data/mephi-web` назначен корректный SELinux context для работы с `nginx`.
+  224  Подтверждение:
+  225  - `artifacts/security_service_check.txt`
+  226  ### 9. Capabilities для tcpdump
+  227  Для бинарного файла `tcpdump` настроены capabilities:
+  228  - `cap_net_raw`
+  229  - `cap_net_admin`
+  230  Подтверждение:
+  231  - `artifacts/security_service_check.txt`
+  232  ### 10. Ограничение root-доступа
+  233  Настроены ограничения:
+  234  - запрещен вход `root` по SSH;
+  235  - локальный вход `root` заблокирован.
+  236  Подтверждение:
+  237  - `artifacts/access_check.txt`
+  238  ### 11. Git и публикация результатов
+  239  - установлен `git`;
+  240  - создан локальный репозиторий;
+  241  - подготовлен и опубликован публичный GitHub-репозиторий с результатами работы.
+  242  Подтверждение:
+  243  - `artifacts/git_check.txt`
+  244  - `REPOSITORY_URL.txt`
+  245  ## Состав репозитория
+  246  ### Основные файлы
+  247  - `README.md` — описание выполненной работы
+  248  - `REPOSITORY_URL.txt` — ссылка на публичный репозиторий
+  249  ### Артефакты
+  250  - `artifacts/network_check.txt` — проверка сети, IP, маршрутов и DNS
+  251  - `artifacts/nginx_journal_last5min.txt` — журнал `nginx` за последние 5 минут
+  252  - `artifacts/storage_check.txt` — проверка диска, файловой системы и `/etc/fstab`
+  253  - `artifacts/security_service_check.txt` — проверка `nginx`, SELinux и capabilities
+  254  - `artifacts/access_check.txt` — проверка пользователя, прав на каталог и ограничений root
+  255  - `artifacts/git_check.txt` — версия `git`
+  256  - `artifacts/package_check.txt` — подтверждение установки требуемых пакетов
+  257  - `artifacts/web_page_check.txt` — подтверждение содержимого веб-страницы
+  258  ## Ссылка на репозиторий
+  259  `https://github.com/egpozd/mephi-session-project-2026`
+  260  ## Итог
+  261  Практическая часть задания выполнена полностью в доступной рабочей среде.  
+  262  Все основные административные действия, предусмотренные заданием, реализованы и подтверждены артефактами, размещенными в данном репозитории.
+  263  EOF
+  264  head -n 20 README.md
+  265  git add README.md && git commit -m "Update README with assignment summary" && git push
+  266  ssh yc-user@89.169.145.41
+  267  
+  268  hostnamectl --static
+  269  [yc-user@mephi-2026 ~]$ hostnamectl --static
+  270  mephi-2026.domain.local
+  271  [yc-user@mephi-2026 ~]$[yc-user@mephi-2026 ~]$ hostnamectl --static
+  272  mephi-2026.domain.local
+  273  [yc-user@mephi-2026 ~]$cd ~/mephi-session-project-2026
+  274  cd ~/mephi-session-project-2026
+  275  history > artifacts/command_history.txt

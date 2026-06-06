@@ -1,0 +1,57 @@
+$ cat /etc/fedora-release
+Fedora release 37 (Thirty Seven)
+
+$ hostnamectl --static
+mephi-2026.domain.local
+
+$ ip -4 addr show dev eth0
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    altname enp7s0
+    inet 192.168.1.100/24 brd 192.168.1.255 scope global dynamic noprefixroute eth0
+       valid_lft 4294966626sec preferred_lft 4294966626sec
+
+$ ip route
+default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.100 metric 100 
+192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.100 metric 100 
+
+$ resolvectl dns eth0
+Link 2 (eth0): 192.168.1.2
+
+$ rpm -q nginx tcpdump libcap-ng-utils
+nginx-1.24.0-1.fc37.x86_64
+tcpdump-4.99.1-7.fc37.x86_64
+libcap-ng-utils-0.8.3-3.fc37.x86_64
+
+$ findmnt /data/mephi-web
+TARGET          SOURCE    FSTYPE OPTIONS
+/data/mephi-web /dev/vdb1 ext4   rw,relatime,seclabel
+
+$ getenforce
+Enforcing
+
+$ ls -Zd /data/mephi-web
+system_u:object_r:httpd_sys_content_t:s0 /data/mephi-web
+
+$ systemctl is-active nginx
+active
+
+$ systemctl is-enabled nginx
+enabled
+
+$ curl -s http://127.0.0.1/
+Hello from Student: М2551072
+
+$ getcap /usr/sbin/tcpdump
+/usr/sbin/tcpdump cap_net_admin,cap_net_raw=eip
+
+$ id mephi-admin
+uid=1001(mephi-admin) gid=1003(mephi-admin) groups=1003(mephi-admin),1002(mephi-devs)
+
+$ ls -ld /data/mephi-web
+drwxrwsr-x. 3 root mephi-devs 4096 Apr  5 16:00 /data/mephi-web
+
+$ sudo passwd -S root
+root LK 2026-03-27 0 99999 7 -1 (Password locked.)
+
+$ sudo sshd -T | grep permitrootlogin
+permitrootlogin no
